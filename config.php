@@ -1,9 +1,16 @@
 <?php
 
 return [
-	'gateway_title' => 'Cardstream',
-	'method_description' => 'Pay securely via Credit / Debit Card with Cardstream',
-	'default_merchant_id' => '100856',
-	'default_secret' => 'Circle4Take40Idea',
-	'default_merchant_country_code' => '826',
+	'default' => [
+		'gateway_title' => 'Cardstream',
+		'method_description' => 'Pay securely via Credit / Debit Card with Cardstream',
+	],
+	'applepay' => [
+		'method_description' => 'Apple Pay description',
+		'title' => 'Apple Pay',
+		'gateway_validation_available' => true,
+	],
+	'module' => [
+		'version' => '3.0.0'
+	]
 ];
