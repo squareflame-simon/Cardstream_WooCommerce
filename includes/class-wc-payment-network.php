@@ -556,7 +556,7 @@ class WC_Payment_Network extends WC_Payment_Gateway
 
 	public function on_order_success($response)
 	{
-		$order = new WC_Order((int)$response['orderRef']);
+		$order = $this->get_order_from_response($response);
 
 		$order_notes = '';
 
@@ -767,8 +767,7 @@ class WC_Payment_Network extends WC_Payment_Gateway
 			return $this->process_error($exception->getMessage(), $response);
 		}
 
-		// Get the WC Order that matched the orderRef in the response.
-		$order = new WC_Order((int)$response['orderRef']);
+		$order = $this->get_order_from_response($response);
 
 		// If order has been paid and this a callback log and ignore.
 		if (isset($_GET['callback']) && $order->is_paid()) {
@@ -946,6 +945,32 @@ class WC_Payment_Network extends WC_Payment_Gateway
 	}
 
 	/**
+	 * Get the WC Order that matches the orderRef or WCID stored in
+	 * merchantData in the response.
+	 *
+	 * @param array $response Gateway response data
+	 * @return WC_Order
+	 */
+	protected function get_order_from_response(array $response)
+	{
+		// Default to using orderRef
+		$order_id = (int)$response['orderRef'];
+
+		// Attempt to search for an item matching "WCID:<id>" in
+		// merchantData
+		$merchant_data = explode('|', $response['merchantData']);
+		foreach ($merchant_data as $md) {
+			$wcid = explode(':', $md);
+			if (count($wcid) === 2 && $wcid[0] === 'WCID') {
+				$order_id = (int)$wcid[1];
+				break;
+			}
+		}
+
+		return new WC_Order($order_id);
+	}
+
+	/**
 	 * Redirect to the URL provided depending on integration type
 	 */
 	protected function redirect($url)
@@ -974,7 +999,7 @@ class WC_Payment_Network extends WC_Payment_Gateway
 			return;
 		}
 
-		$order = new WC_Order((int)$response['orderRef']);
+		$order = $this->get_order_from_response($response);
 
 		//when the wallets is enabled, the user is logged in and there is a wallet ID in the response.
 		if ($this->settings['customerWalletsEnabled'] === 'Y' && isset($response['walletID']) && $order->get_user_id() != 0) {
@@ -1019,7 +1044,7 @@ class WC_Payment_Network extends WC_Payment_Gateway
 
 		$redirectUrl = get_site_url();
 		if (isset($response['orderRef'], $response['responseCode'], $response['responseMessage'])) {
-			$order = new WC_Order((int)$response['orderRef']);
+			$order = $this->get_order_from_response($response);
 
 			$order_notes = '';
 
